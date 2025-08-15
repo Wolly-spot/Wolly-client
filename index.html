@@ -33,10 +33,14 @@
       margin: 5px 0;
       color: #555;
     }
-    ul#job-list li a {
-      text-decoration: none;
-      color: #28a745;
-      margin-right: 10px;
+    ul#job-list li button {
+      background-color: #28a745;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 5px;
     }
   </style>
 </head>
@@ -44,17 +48,16 @@
   <h1>現在募集中の求人</h1>
   <ul id="job-list"></ul>
 
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <script>
+    const LIFF_ID = "YOUR_LIFF_ID"; // ←ここに自分のLIFF IDを入れる
+
     async function loadJobs() {
       try {
-        // あなたのWebアプリURLに変更してください
         const apiUrl = "https://script.google.com/macros/s/AKfycbxVX-Mgoqy7qBQ3MXw7WqlNf9Wq7jEw0KSDrAOtxL6HfeUTGrXvKie_1QuGhku4pAOQ/exec";
-        
-        // ① APIを叩く
         const res = await fetch(apiUrl);
         const jobs = await res.json();
 
-        // ② HTMLに求人一覧を描画
         const jobList = document.getElementById("job-list");
         jobList.innerHTML = "";
         jobs.forEach(job => {
@@ -64,16 +67,31 @@
             <p>締切日: ${new Date(job.deadline).toLocaleDateString()}</p>
             <a href="${job.videoUrl}" target="_blank">紹介動画を見る</a>
             <a href="${job.detailsPage}" target="_blank">詳細ページへ</a>
+            <br>
+            <button data-jobid="${job.jobId}">この求人に応募する</button>
           `;
           jobList.appendChild(li);
         });
+
+        // 応募ボタンのクリックイベント
+        document.querySelectorAll('button[data-jobid]').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const jobId = btn.getAttribute('data-jobid');
+            await liff.init({ liffId: LIFF_ID });
+            if (!liff.isLoggedIn()) {
+              liff.login();
+            } else {
+              liff.openWindow({ url: `after_entry.html?jobId=${jobId}`, external: false });
+            }
+          });
+        });
+
       } catch (error) {
         console.error("求人データの読み込みに失敗しました:", error);
         document.getElementById("job-list").innerHTML = "<li>データを読み込めませんでした。</li>";
       }
     }
 
-    // ページ読み込み時に実行
     window.onload = loadJobs;
   </script>
 </body>
