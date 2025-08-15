@@ -1,29 +1,80 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>求人情報｜Wolly</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <title>求人一覧 - Worlly</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #f9f9f9;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    ul#job-list {
+      list-style: none;
+      padding: 0;
+    }
+    ul#job-list li {
+      background: white;
+      padding: 15px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    ul#job-list li h3 {
+      margin: 0;
+      color: #007BFF;
+    }
+    ul#job-list li p {
+      margin: 5px 0;
+      color: #555;
+    }
+    ul#job-list li a {
+      text-decoration: none;
+      color: #28a745;
+      margin-right: 10px;
+    }
+  </style>
 </head>
 <body>
-  <div class="container">
-    <h1>スーパーの品出しサポート</h1>
-    <div class="job-detail">
-      <p><strong>勤務地：</strong>埼玉県さいたま市大宮区○○</p>
-      <p><strong>勤務時間：</strong>9:00〜12:00</p>
-      <p><strong>報酬：</strong>3,000円（交通費込み）</p>
-    </div>
-    <div class="job-video">
-      <p><strong>業務内容サンプル動画：</strong></p>
-      <video controls width="100%">
-        <source src="sample.mp4" type="video/mp4" />
-        お使いのブラウザは動画再生に対応していません。
-      </video>
-    </div>
-    <div class="entry-button">
-      <a href="after_entry.html" class="button">この求人に応募する</a>
-    </div>
-  </div>
+  <h1>現在募集中の求人</h1>
+  <ul id="job-list"></ul>
+
+  <script>
+    async function loadJobs() {
+      try {
+        // あなたのWebアプリURLに変更してください
+        const apiUrl = "https://script.google.com/macros/s/AKfycbxVX-Mgoqy7qBQ3MXw7WqlNf9Wq7jEw0KSDrAOtxL6HfeUTGrXvKie_1QuGhku4pAOQ/exec";
+        
+        // ① APIを叩く
+        const res = await fetch(apiUrl);
+        const jobs = await res.json();
+
+        // ② HTMLに求人一覧を描画
+        const jobList = document.getElementById("job-list");
+        jobList.innerHTML = "";
+        jobs.forEach(job => {
+          const li = document.createElement("li");
+          li.innerHTML = `
+            <h3>${job.title}</h3>
+            <p>締切日: ${new Date(job.deadline).toLocaleDateString()}</p>
+            <a href="${job.videoUrl}" target="_blank">紹介動画を見る</a>
+            <a href="${job.detailsPage}" target="_blank">詳細ページへ</a>
+          `;
+          jobList.appendChild(li);
+        });
+      } catch (error) {
+        console.error("求人データの読み込みに失敗しました:", error);
+        document.getElementById("job-list").innerHTML = "<li>データを読み込めませんでした。</li>";
+      }
+    }
+
+    // ページ読み込み時に実行
+    window.onload = loadJobs;
+  </script>
 </body>
 </html>
