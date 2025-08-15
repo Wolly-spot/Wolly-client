@@ -33,14 +33,22 @@
       margin: 5px 0;
       color: #555;
     }
-    ul#job-list li button {
-      background-color: #28a745;
+    ul#job-list li a {
+      text-decoration: none;
+      color: #28a745;
+      margin-right: 10px;
+    }
+    button.entry-btn {
+      background-color: #ff5722;
       color: white;
       border: none;
-      padding: 8px 12px;
-      border-radius: 4px;
+      padding: 8px 15px;
+      border-radius: 5px;
       cursor: pointer;
       margin-top: 5px;
+    }
+    button.entry-btn:hover {
+      background-color: #e64a19;
     }
   </style>
 </head>
@@ -48,18 +56,19 @@
   <h1>現在募集中の求人</h1>
   <ul id="job-list"></ul>
 
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <script>
-    const LIFF_ID = "YOUR_LIFF_ID"; // ←ここに自分のLIFF IDを入れる
+    // Webアプリ URL（GAS の doGet/doPost にアクセス）
+    const apiUrl = "https://script.google.com/macros/s/AKfycbxVX-Mgoqy7qBQ3MXw7WqlNf9Wq7jEw0KSDrAOtxL6HfeUTGrXvKie_1QuGhku4pAOQ/exec";
+    // ダミーのユーザーID（実際はログイン情報から取得）
+    const userId = "TEST_USER_001";
 
     async function loadJobs() {
       try {
-        const apiUrl = "https://script.google.com/macros/s/AKfycbxVX-Mgoqy7qBQ3MXw7WqlNf9Wq7jEw0KSDrAOtxL6HfeUTGrXvKie_1QuGhku4pAOQ/exec";
         const res = await fetch(apiUrl);
         const jobs = await res.json();
-
         const jobList = document.getElementById("job-list");
         jobList.innerHTML = "";
+
         jobs.forEach(job => {
           const li = document.createElement("li");
           li.innerHTML = `
@@ -67,21 +76,31 @@
             <p>締切日: ${new Date(job.deadline).toLocaleDateString()}</p>
             <a href="${job.videoUrl}" target="_blank">紹介動画を見る</a>
             <a href="${job.detailsPage}" target="_blank">詳細ページへ</a>
-            <br>
-            <button data-jobid="${job.jobId}">この求人に応募する</button>
+            <button class="entry-btn" data-jobid="${job.jobId}">この求人に応募する</button>
           `;
           jobList.appendChild(li);
         });
 
-        // 応募ボタンのクリックイベント
-        document.querySelectorAll('button[data-jobid]').forEach(btn => {
-          btn.addEventListener('click', async () => {
-            const jobId = btn.getAttribute('data-jobid');
-            await liff.init({ liffId: LIFF_ID });
-            if (!liff.isLoggedIn()) {
-              liff.login();
-            } else {
-              liff.openWindow({ url: `after_entry.html?jobId=${jobId}`, external: false });
+        // 応募ボタンにクリックイベントを追加
+        document.querySelectorAll(".entry-btn").forEach(btn => {
+          btn.addEventListener("click", async () => {
+            const jobId = btn.getAttribute("data-jobid");
+            try {
+              const res = await fetch(apiUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ mode: "entry", userId, jobId })
+              });
+              const result = await res.json();
+              if(result.result === "OK") {
+                window.location.href = "after_entry.html";
+              } else {
+                alert("応募に失敗しました。もう一度お試しください。");
+                console.error(result);
+              }
+            } catch(err) {
+              alert("エラーが発生しました。");
+              console.error(err);
             }
           });
         });
@@ -92,6 +111,7 @@
       }
     }
 
+    // ページ読み込み時に実行
     window.onload = loadJobs;
   </script>
 </body>
